@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hey Sunflower, This Surprise Is For You 🌻</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & ReactDOM -->
+    <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone@7.26.4/babel.min.js"></script>
+    <script src="https://unpkg.com/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Yesteryear&display=swap');
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #2e1005;
+            color: #fef3c7;
+        }
+        .font-handwriting {
+            font-family: 'Yesteryear', cursive;
+        }
+        /* Custom scrollbars */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1c0a00;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #d97706;
+            border-radius: 4px;
+        }
+        @keyframes floatDown {
+            0% { transform: translateY(-20px) rotate(0deg); opacity: 0.8; }
+            50% { transform: translateY(400px) rotate(180deg); opacity: 1; }
+            100% { transform: translateY(800px) rotate(360deg); opacity: 0; }
+        }
+        .floating-cheese-particle {
+            position: absolute;
+            animation: floatDown 6s linear infinite;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="selection:bg-yellow-500 selection:text-slate-950">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Drive Helper function to get direct viewable links
+        const convertDriveLinkToDirect = (url) => {
+            if (!url) return '';
+            const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+            if (match && match[1]) {
+                return `https://lh3.googleusercontent.com/d/${match[1]}=s1600`;
+            }
+            return url;
+        };
+
+        function App() {
+            const [hasEnteredSite, setHasEnteredSite] = useState(false);
+            const [activeTab, setActiveTab] = useState('home');
+            const BIRTHDAY_UNLOCK_TIME = new Date(2026, 10, 11, 0, 0, 0).getTime(); // 11 Nov 2026, 12:00 AM (device local time)
+            const [isLockedUntilBirthday, setIsLockedUntilBirthday] = useState(() => Date.now() < BIRTHDAY_UNLOCK_TIME);
+
+            // Auto-unlock exactly when the birthday begins (also works if the page is already open)
+            useEffect(() => {
+                const msLeft = BIRTHDAY_UNLOCK_TIME - Date.now();
+                if (msLeft <= 0) return;
+                const t = setTimeout(() => setIsLockedUntilBirthday(false), Math.min(msLeft, 2147483000));
+                return () => clearTimeout(t);
+            }, []);
+            const [showLockedModal, setShowLockedModal] = useState(false);
+            const [lockedItemName, setLockedItemName] = useState('');
+            const [floatingHearts, setFloatingHearts] = useState([]);
+
+            // Drive Folder Photos Integrated
+            const bannerImages = ["photos/banner/b01.jpg","photos/banner/b02.jpg","photos/banner/b03.jpg","photos/banner/b04.jpg"];
+            const galleryPhotos = Array.from({ length: 52 }, (_, i) => `photos/gallery/g${String(i + 1).padStart(2, '0')}.jpg`);
+            const [lightboxIdx, setLightboxIdx] = useState(null);
+
+            const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
+
+            // Banner 5-second auto slideshow
+            useEffect(() => {
+                const timer = setInterval(() => {
+                    setCurrentBannerIndex(prev => (prev + 1) % bannerImages.length);
+                }, 5000);
+                return () => clearInterval(timer);
+            }, []);
+
+            const triggerHeart = (e) => {
+                const newHeart = {
+                    id: Date.now() + Math.random(),
+                    x: e.clientX,
+                    y: e.clientY
+                };
+                setFloatingHearts(prev => [...prev.slice(-10), newHeart]);
+            };
+
+            const handleProtectedClick = (targetTab, name) => {
+                if (isLockedUntilBirthday) {
+                    setLockedItemName(name);
+                    setShowLockedModal(true);
+                } else {
+                    setActiveTab(targetTab);
+                }
+            };
+
+            return (
+                <div className="min-h-screen relative overflow-x-hidden pb-20" onClick={triggerHeart}>
+                    
+                    {/* Floating Heart / Sunflower Particles on Click */}
+                    {floatingHearts.map(h => (
+                        <span 
+                            key={h.id} 
+                            className="fixed pointer-events-none text-yellow-400 text-2xl animate-ping z-50"
+                            style={{ left: `${h.x - 12}px`, top: `${h.y - 12}px` }}
+                        >
+                            🌻
+                        </span>
+                    ))}
+
+                    {/* CUTE LOCKED MODAL */}
+                    {showLockedModal && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md" onClick={() => setShowLockedModal(false)}>
+                            <div className="bg-amber-950 border-2 border-yellow-500/60 rounded-3xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl relative" onClick={e => e.stopPropagation()}>
+                                <div className="w-16 h-16 rounded-full bg-yellow-500/20 border border-yellow-500/50 flex items-center justify-center text-yellow-400 mx-auto text-2xl">
+                                    🔒
+                                </div>
+                                <h3 className="text-xl font-extrabold text-white">දැන් මේක අරින්න බෑ! 🎂✨</h3>
+                                <p className="text-yellow-300 font-semibold text-sm">Shooo Panchi, Birthday එක වෙනකන් ඉන්න! 🙈💖</p>
+                                <p className="text-amber-200 text-xs bg-amber-900/60 p-4 rounded-2xl italic border border-amber-800">
+                                    "Ravindu has locked <strong>"{lockedItemName}"</strong> until your birthday countdown reaches 00:00! Sweet things come to those who wait, Chuti! 🌻"
+                                </p>
+                                <button 
+                                    onClick={() => setShowLockedModal(false)}
+                                    className="w-full py-3 rounded-xl bg-gradient-to-r from-yellow-400 to-amber-500 text-slate-950 font-black text-sm shadow-lg hover:scale-105 transition-all"
+                                >
+                                    හරි, මම ඉන්නම්! (Okay, I'll wait! 💖)
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* FIRST PAGE WELCOME SCREEN */}
+                    {!hasEnteredSite && (
+                        <div className="fixed inset-0 z-50 bg-amber-950 flex flex-col items-center justify-center p-6 text-center">
+                            <div className="max-w-md w-full bg-amber-900/80 border border-yellow-500/40 p-8 rounded-3xl shadow-2xl space-y-6 backdrop-blur-md">
+                                <div className="w-24 h-24 rounded-full bg-yellow-500/20 border-2 border-yellow-500/50 flex items-center justify-center text-5xl mx-auto animate-bounce">
+                                    🌻
+                                </div>
+                                <span className="text-yellow-400 text-xs font-bold tracking-widest uppercase bg-yellow-500/10 py-1 px-4 rounded-full border border-yellow-500/30 inline-block">
+                                    From Ravindu to Himaya (Chuti) 💖
+                                </span>
+                                <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-amber-300 to-yellow-400">
+                                    hey sunflower this surprise is for you.. 🌻✨
+                                </h1>
+                                <button 
+                                    onClick={() => setHasEnteredSite(true)}
+                                    className="w-full py-4 rounded-2xl bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-500 text-slate-950 font-black text-base shadow-xl hover:scale-105 transition-all"
+                                >
+                                    Open Sunflower Surprise 🌻
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* MAIN CONTENT AREA */}
+                    <div className="max-w-4xl mx-auto px-4 py-8">
+                        
+                        {/* HEADER & COUNTDOWN */}
+                        <header className="bg-amber-900/80 border border-yellow-500/40 rounded-3xl p-6 md:p-8 text-center shadow-2xl relative overflow-hidden mb-8">
+                            {bannerImages.map((img, idx) => (
+                                <img
+                                    key={'hdr' + idx}
+                                    src={img}
+                                    alt=""
+                                    className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${idx === currentBannerIndex ? 'opacity-100' : 'opacity-0'}`}
+                                />
+                            ))}
+                            <div className="absolute inset-0 bg-gradient-to-b from-amber-950/75 via-amber-950/85 to-amber-950/95" />
+                            <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
+                                <button 
+                                    onClick={() => {
+                                        const pin = prompt("Enter Admin Passcode :");
+                                        if (pin === "111126") {
+                                            setIsLockedUntilBirthday(!isLockedUntilBirthday);
+                                            alert(`Admin Access Granted! Birthday Lock is now ${!isLockedUntilBirthday ? 'LOCKED' : 'UNLOCKED'}`);
+                                        } else if (pin !== null) {
+                                            alert("Incorrect Passcode!");
+                                        }
+                                    }}
+                                    className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${
+                                        isLockedUntilBirthday ? 'bg-amber-950 text-amber-300 border-amber-500/60' : 'bg-emerald-950 text-emerald-300 border-emerald-500/60'
+                                    }`}
+                                >
+                                    {isLockedUntilBirthday ? 'Admin Lock: ON 🔒' : 'Admin Lock: OFF 🔓'}
+                                </button>
+                            </div>
+
+                            <div className="relative z-10 space-y-4">
+                                <span className="text-yellow-400 text-xs font-bold uppercase tracking-widest bg-yellow-500/10 px-4 py-1.5 rounded-full border border-yellow-500/30 inline-block">
+                                    Happy Birthday Sunflower Himaya (Chuti)! 🌻
+                                </span>
+                                <h1 className="text-3xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-amber-300 to-yellow-400">
+                                    Chuti's Birthday Surprise 🌻✨
+                                </h1>
+                                <p className="text-amber-200 text-xs md:text-sm">
+                                    Birthday: 2006.11.11 | Special Anniversary: 2026.01.19
+                                </p>
+                                <CountdownTimer targetMonth={11} targetDay={11} />
+                            </div>
+                        </header>
+
+                        {/* NAV BUTTONS */}
+                        <nav className="flex justify-center gap-2 overflow-x-auto pb-4 mb-8">
+                            {[
+                                { id: 'home', label: 'Surprise Hub 🌻', locked: false },
+                                { id: 'letter', label: 'My Letter 📜', locked: true },
+                                { id: 'gallery', label: 'Photo Gallery 🖼️', locked: true },
+                                { id: 'openwhen', label: 'Open When 💌', locked: true }
+                            ].map(tab => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => tab.locked && isLockedUntilBirthday ? handleProtectedClick(tab.id, tab.label) : setActiveTab(tab.id)}
+                                    className={`px-4 py-2.5 rounded-2xl text-xs font-bold whitespace-nowrap transition-all ${
+                                        activeTab === tab.id 
+                                            ? 'bg-gradient-to-r from-yellow-400 to-amber-500 text-slate-950 shadow-lg scale-105' 
+                                            : 'bg-amber-950/80 text-amber-200 border border-amber-900 hover:bg-amber-900'
+                                    }`}
+                                >
+                                    {tab.label} {tab.locked && isLockedUntilBirthday && '🔒'}
+                                </button>
+                            ))}
+                        </nav>
+
+                        {/* TAB 1: HOME SURPRISE HUB */}
+                        {activeTab === 'home' && (
+                            <div className="space-y-6">
+                                {/* Banner Carousel */}
+                                <div className="relative h-64 md:h-96 rounded-3xl overflow-hidden border border-yellow-500/30 bg-amber-950 shadow-2xl">
+                                    {bannerImages.map((img, idx) => (
+                                        <img 
+                                            key={idx}
+                                            src={convertDriveLinkToDirect(img)} 
+                                            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
+                                                idx === currentBannerIndex ? 'opacity-80' : 'opacity-0'
+                                            }`}
+                                        />
+                                    ))}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-amber-950 via-amber-950/40 to-transparent p-6 flex flex-col justify-end">
+                                        <h2 className="text-2xl font-extrabold text-white">To My Dearest Chuti 🌻</h2>
+                                        <p className="text-amber-200 text-xs">Swipeable memories & 5-second automatic slideshow</p>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div 
+                                        onClick={() => handleProtectedClick('letter', 'My Love Letter')}
+                                        className="bg-amber-900/60 border border-yellow-500/30 p-6 rounded-3xl cursor-pointer hover:border-yellow-400 transition-all"
+                                    >
+                                        <h3 className="text-lg font-bold text-white mb-1">My Love Letter 📜</h3>
+                                        <p className="text-amber-200/80 text-xs">Read my handwritten animated Sinhala letter with melting cheese & hearts!</p>
+                                    </div>
+                                    <div 
+                                        onClick={() => handleProtectedClick('gallery', 'Photo Gallery')}
+                                        className="bg-amber-900/60 border border-yellow-500/30 p-6 rounded-3xl cursor-pointer hover:border-yellow-400 transition-all"
+                                    >
+                                        <h3 className="text-lg font-bold text-white mb-1">Photo Gallery 🖼️</h3>
+                                        <p className="text-amber-200/80 text-xs">Our romantic album photos & uploaded memories together.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* TAB 2: ANIMATED SINHALA LETTER */}
+                        {activeTab === 'letter' && <SinhalaLetter />}
+
+                        {/* TAB 3: GALLERY */}
+                        {activeTab === 'gallery' && (
+                            <div className="space-y-4">
+                                <div className="bg-amber-900/60 p-6 rounded-3xl border border-yellow-500/30">
+                                    <h2 className="text-xl font-bold text-white">Our Photo Gallery 🖼️</h2>
+                                    <p className="text-amber-200 text-xs">{galleryPhotos.length} memories of Himaya (Chuti) & Ravindu 🌻</p>
+                                </div>
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                    {galleryPhotos.map((src, i) => (
+                                        <button
+                                            key={src}
+                                            onClick={() => setLightboxIdx(i)}
+                                            className="relative aspect-square rounded-2xl overflow-hidden border border-yellow-500/20 bg-amber-950 hover:border-yellow-400/70 transition-all"
+                                        >
+                                            <img src={src} loading="lazy" alt={`Memory ${i + 1}`} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {lightboxIdx !== null && (
+                            <div
+                                className="fixed inset-0 z-50 bg-slate-950/95 flex items-center justify-center p-4"
+                                onClick={() => setLightboxIdx(null)}
+                            >
+                                <button className="absolute top-4 right-4 text-white text-3xl px-3" onClick={() => setLightboxIdx(null)}>✕</button>
+                                <button
+                                    className="absolute left-2 md:left-6 text-yellow-400 text-4xl px-3 py-6"
+                                    onClick={(e) => { e.stopPropagation(); setLightboxIdx((lightboxIdx - 1 + galleryPhotos.length) % galleryPhotos.length); }}
+                                >‹</button>
+                                <img
+                                    src={galleryPhotos[lightboxIdx]}
+                                    alt=""
+                                    className="max-h-[85vh] max-w-full rounded-2xl border border-yellow-500/40 shadow-2xl"
+                                    onClick={(e) => e.stopPropagation()}
+                                />
+                                <button
+                                    className="absolute right-2 md:right-6 text-yellow-400 text-4xl px-3 py-6"
+                                    onClick={(e) => { e.stopPropagation(); setLightboxIdx((lightboxIdx + 1) % galleryPhotos.length); }}
+                                >›</button>
+                                <span className="absolute bottom-4 text-amber-200 text-xs">{lightboxIdx + 1} / {galleryPhotos.length}</span>
+                            </div>
+                        )}
+
+                        {/* TAB 4: OPEN WHEN */}
+                        {activeTab === 'openwhen' && (
+                            <div className="bg-amber-900/60 p-6 rounded-3xl border border-yellow-500/30 space-y-4">
+                                <h2 className="text-xl font-bold text-white">"Open When..." Cards 💌</h2>
+                                <p className="text-amber-200 text-xs">Digital love notes for whenever you miss me.</p>
+                            </div>
+                        )}
+
+                    </div>
+                </div>
+            );
+        }
+
+        // ANIMATED TYPEWRITER SINHALA LETTER
+        function SinhalaLetter() {
+            const letterText = `චූටි බබා,මට වෙන කරන්න දෙයක් මතක් වෙන්නෙ නෑ🙃 ...මම හිතනව මේ දෙයින් ඔයා සතුටු වෙයි කියල🙈 ...මම ඔයාට ආදරේ තරම කියාගන්න බෑ.❤️🥺🌍.මේ වෙලාවෙත් ඔයාගෙ birthday එකට වෙලාව ලං වෙද්දි මගෙ පපුව හයියෙන් ගැහෙනව.ඔයා තමයි මම හෙව්ව කෙනා කියල මට තේරුනේ ටික ටික අපි දෙන්න ආදරේ කරද්දි.මට ආදර කතා හිතල ලියන්න බෑ ඔයා වගේ 🥲.ඒත් මම ගොඩක් ආදරෙයි.❤️මට ඒක කියාගන්න තේරෙන්නෙ නෑ.ඔයාව මේ ලෝකෙ ලස්සනටම සතුටෙන්ම ඉන්න කෙල්ල කරන්නයි මට ඕන හැම තිස්සෙම.ඔයා ඇතුළෙ ඉන්න ඒ ලස්සන හුරතල් දඟකාර කෙල්ලට මම ආදරෙයි පිස්සුවෙන් වගේ.❤️🌍.මං දන්නව ඔයත් මට ගොඩක් ආදරෙයි.අපි දෙන්න අපි දෙන්නගෙ හීන ලස්සනට හැබෑ කරගමු මැණික ❤️🌍.මාව වැටෙන තැන් වලදි මට හයියක් වෙන කෙනෙක් මට ඔන උනේ 0 ඉඳන් හැම එකම හැබෑ කරගන්න.එතකන් මට හයියක් වෙන්න පුලුවන් කෙනෙක් මට හම්බුනා කියල හිතෙනව.මම ගොඩාආආආආඅක්ක් ආදරෙයි.අපි තව මේ වගේ ලස්සන උපන්දින ගොඩක් එකට සමරමු.❤️🌍I love my sunflower 🌻 .ummmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmaaaaaaaahhhhh.❤️❤️🌍`;
+
+            const [displayed, setDisplayed] = useState('');
+            const [idx, setIdx] = useState(0);
+
+            useEffect(() => {
+                if (idx < letterText.length) {
+                    const t = setTimeout(() => {
+                        setDisplayed(prev => prev + letterText[idx]);
+                        setIdx(prev => prev + 1);
+                    }, 35);
+                    return () => clearTimeout(t);
+                }
+            }, [idx]);
+
+            return (
+                <div className="bg-amber-900/60 border border-yellow-500/40 p-6 md:p-8 rounded-3xl relative overflow-hidden shadow-2xl">
+                    {/* Melting Cheese & Floating Hearts Particles */}
+                    <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                        {[...Array(8)].map((_, i) => (
+                            <div 
+                                key={i} 
+                                className="floating-cheese-particle text-xl"
+                                style={{ left: `${(i + 1) * 11}%`, animationDelay: `${i * 0.8}s` }}
+                            >
+                                {i % 2 === 0 ? '🧀' : '❤️'}
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="text-center space-y-2 mb-6 relative z-10">
+                        <span className="text-xs font-bold text-yellow-400 uppercase tracking-widest bg-yellow-500/10 px-3 py-1 rounded-full border border-yellow-500/20">
+                            From Ravindu To My Sunflower 🌻
+                        </span>
+                        <h2 className="text-2xl font-extrabold text-white">To My Dearest Chuti 💖</h2>
+                    </div>
+
+                    <div className="bg-amber-950/90 border border-yellow-500/30 p-6 rounded-2xl text-amber-100 text-sm md:text-base leading-relaxed font-medium whitespace-pre-line relative z-10">
+                        {displayed}
+                        {idx < letterText.length && <span className="inline-block w-2 h-5 bg-yellow-400 ml-1 animate-pulse" />}
+                    </div>
+                </div>
+            );
+        }
+
+        // COUNTDOWN TIMER COMPONENT
+        function CountdownTimer({ targetMonth, targetDay }) {
+            const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+
+            useEffect(() => {
+                const timer = setInterval(() => {
+                    const now = new Date();
+                    let year = now.getFullYear();
+                    let target = new Date(year, targetMonth - 1, targetDay);
+                    if (now > target) target = new Date(year + 1, targetMonth - 1, targetDay);
+                    const diff = target - now;
+                    if (diff > 0) {
+                        setTimeLeft({
+                            days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+                            hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+                            minutes: Math.floor((diff / 1000 / 60) % 60),
+                            seconds: Math.floor((diff / 1000) % 60)
+                        });
+                    }
+                }, 1000);
+                return () => clearInterval(timer);
+            }, []);
+
+            return (
+                <div className="flex justify-center gap-3 pt-2">
+                    {[
+                        { label: 'Days', v: timeLeft.days },
+                        { label: 'Hours', v: timeLeft.hours },
+                        { label: 'Mins', v: timeLeft.minutes },
+                        { label: 'Secs', v: timeLeft.seconds }
+                    ].map((item, i) => (
+                        <div key={i} className="bg-amber-950/90 border border-yellow-500/40 p-3 rounded-2xl min-w-[70px] text-center">
+                            <span className="text-xl md:text-2xl font-black text-yellow-400 block">{item.v}</span>
+                            <span className="text-[10px] text-amber-200/80 font-bold uppercase">{item.label}</span>
+                        </div>
+                    ))}
+                </div>
+            );
+        }
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>
